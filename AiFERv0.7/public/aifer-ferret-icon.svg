@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#39FF14"/>
+      <stop offset="100%" stop-color="#00E5FF"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a2010"/>
+      <stop offset="100%" stop-color="#4a2a15"/>
+    </linearGradient>
+    <filter id="gl"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="#0a0a14"/>
+  <rect width="256" height="256" rx="56" fill="none" stroke="url(#ng)" stroke-width="2" opacity="0.4"/>
+  <!-- Ferret face -->
+  <g transform="translate(128,115)">
+    <!-- Head -->
+    <ellipse cx="0" cy="0" rx="55" ry="48" fill="url(#bg)"/>
+    <ellipse cx="5" cy="5" rx="30" ry="22" fill="#6a4a25" opacity="0.4"/>
+    <!-- Ears -->
+    <ellipse cx="-30" cy="-40" rx="14" ry="20" fill="#4a2a15" transform="rotate(-10,-30,-40)"/>
+    <ellipse cx="30" cy="-42" rx="14" ry="20" fill="#4a2a15" transform="rotate(10,30,-42)"/>
+    <ellipse cx="-30" cy="-38" rx="8" ry="12" fill="#8a5a30" transform="rotate(-10,-30,-38)"/>
+    <ellipse cx="30" cy="-40" rx="8" ry="12" fill="#8a5a30" transform="rotate(10,30,-40)"/>
+    <!-- Eyes (NEON) -->
+    <circle cx="-16" cy="-8" r="11" fill="#111" stroke="#39FF14" stroke-width="2"/>
+    <circle cx="18" cy="-8" r="11" fill="#111" stroke="#39FF14" stroke-width="2"/>
+    <circle cx="-16" cy="-8" r="6" fill="#39FF14"/>
+    <circle cx="18" cy="-8" r="6" fill="#39FF14"/>
+    <circle cx="-18" cy="-10" r="3" fill="#fff" opacity="0.8"/>
+    <circle cx="16" cy="-10" r="3" fill="#fff" opacity="0.8"/>
+    <!-- Nose -->
+    <ellipse cx="1" cy="12" rx="7" ry="5" fill="#1a0a05"/>
+    <!-- Mouth -->
+    <path d="M-4,18 C-2,22 4,22 6,18" stroke="#1a0a05" stroke-width="2" fill="none"/>
+    <!-- Signal waves -->
+    <g opacity="0.5">
+      <path d="M50,-5 C60,-18 60,8 50,-5" stroke="#39FF14" stroke-width="2.5" fill="none">
+        <animate attributeName="opacity" values="0.5;0.1;0.5" dur="1.5s" repeatCount="indefinite"/>
+      </path>
+      <path d="M60,-10 C75,-28 75,12 60,-10" stroke="#00E5FF" stroke-width="2" fill="none">
+        <animate attributeName="opacity" values="0.3;0.05;0.3" dur="1.5s" begin="0.3s" repeatCount="indefinite"/>
+      </path>
+      <path d="M-50,-5 C-60,-18 -60,8 -50,-5" stroke="#39FF14" stroke-width="2.5" fill="none">
+        <animate attributeName="opacity" values="0.5;0.1;0.5" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+  <!-- Text -->
+  <text x="128" y="210" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="30" fill="url(#ng)" letter-spacing="3">AiFER</text>
+</svg>

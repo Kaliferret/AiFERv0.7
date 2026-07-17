@@ -1,0 +1,211 @@
+name: AiFER Cross-Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag'
+        required: true
+        default: 'v0.7.0'
+
+jobs:
+  build-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Intel
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+            name: 'macOS-Intel'
+          # macOS Apple Silicon
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            name: 'macOS-AppleSilicon'
+          # Linux
+          - platform: 'ubuntu-22.04'
+            args: ''
+            name: 'Linux-x64'
+          # Windows
+          - platform: 'windows-latest'
+            args: ''
+            name: 'Windows-x64'
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libayatana-appindicator3-dev \
+            libssl-dev \
+            libxdo-dev \
+            build-essential \
+            curl \
+            wget \
+            file
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS signing (optional, add secrets for production)
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows signing (optional)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'AiFER ${{ github.ref_name }}'
+          releaseBody: |
+            🦝 **AiFER ${{ github.ref_name }} — The Bouncing Ferret**
+            
+            ## Downloads
+            - **macOS**: `.dmg` (Intel and Apple Silicon)
+            - **Windows**: `.msi` and `.exe` (NSIS installer)
+            - **Linux**: `.deb`, `.rpm`, `.AppImage`
+            
+            ## What's new
+            See CHANGELOG.md
+            
+            ## Install
+            Download the installer for your platform below.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aifer-${{ matrix.name }}
+          path: |
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/*/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.rpm
+            src-tauri/target/release/bundle/**/*.AppImage
+
+  build-android:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      
+      - name: Install deps
+        run: npm ci
+      
+      - name: Build web
+        run: npm run build
+      
+      - name: Sync Capacitor
+        run: npx cap sync android
+      
+      - name: Build APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: aifer-android
+          path: android/app/build/outputs/apk/release/*.apk
+
+  build-pwa:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      
+      - name: Upload PWA
+        uses: actions/upload-artifact@v4
+        with:
+          name: aifer-pwa
+          path: dist/
+      
+      - name: Deploy to Cloudflare Pages
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=aifer-os
+        continue-on-error: true
+
+  summary:
+    needs: [build-tauri, build-android, build-pwa]
+    runs-on: ubuntu-22.04
+    if: always()
+    steps:
+      - name: Build summary
+        run: |
+          echo "## 🦝 AiFER Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS Intel | ${{ needs.build-tauri.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| macOS Apple Silicon | ${{ needs.build-tauri.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows | ${{ needs.build-tauri.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | ${{ needs.build-tauri.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android APK | ${{ needs.build-android.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PWA | ${{ needs.build-pwa.result }} |" >> $GITHUB_STEP_SUMMARY

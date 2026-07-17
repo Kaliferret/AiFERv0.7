@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.0.0",
+  "productName": "AiFER",
+  "version": "0.7.0",
+  "identifier": "org.aifer.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "AiFER OS — The Bouncing Ferret",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "theme": "Dark",
+        "backgroundColor": "#06060C"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://api.anthropic.com https://api.groq.com https://api.openai.com https://fullnode.testnet.sui.io https://fullnode.mainnet.sui.io https://aggregator.walrus-testnet.walrus.space https://publisher.walrus-testnet.walrus.space ws://localhost:* http://localhost:*; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com"
+    },
+    "trayIcon": {
+      "iconPath": "icons/32x32.png",
+      "tooltip": "AiFER OS — The Bouncing Ferret"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "deb", "rpm", "appimage", "msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "category": "Utility",
+    "shortDescription": "AI-first mesh ecosystem",
+    "longDescription": "AiFER OS — The Bouncing Ferret. Decentralized AI platform combining local LLM inference, P2P mesh networking, and Sui blockchain.",
+    "copyright": "(c) 2026 SEM / aifer.org",
+    "publisher": "AiFER",
+    "homepage": "https://aifer.org",
+    "licenseFile": "../LICENSE",
+    "windows": {
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
+      "webviewInstallMode": { "type": "embedBootstrapper" },
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["English", "Dutch"],
+        "displayLanguageSelector": true,
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13",
+      "hardenedRuntime": true,
+      "dmg": {
+        "windowSize": { "width": 660, "height": 400 },
+        "appPosition": { "x": 180, "y": 170 },
+        "applicationFolderPosition": { "x": 480, "y": 170 }
+      }
+    },
+    "linux": {
+      "deb": { "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"] },
+      "appimage": { "bundleMediaFramework": true }
+    }
+  },
+  "plugins": {
+    "updater": { "active": false }
+  }
+}
